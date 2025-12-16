@@ -1,0 +1,1 @@
+export function createCall(){return{text:'Socorro! Preciso de ajuda!',address:null,resolved:false};}
