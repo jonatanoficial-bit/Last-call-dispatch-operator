@@ -2,24 +2,101 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Central Dispatch — Operador</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Last Call: Dispatch Operator — Operação</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/ui.css" />
 </head>
 <body class="game-screen state-calm">
-<header class="top-bar">CENTRAL EM OPERAÇÃO</header>
-<main class="game-layout">
-  <section class="left-panel">
-    <button id="dispatchBtn">DESPACHAR</button>
-  </section>
-  <section class="right-panel">
-    <p>Stress: <span id="stress">0%</span></p>
-    <p>Fadiga: <span id="fatigue">0%</span></p>
-    <p>Erros: <span id="errors">0</span></p>
-    <p>Pontuação: <span id="score">0</span></p>
-  </section>
-</main>
-<script src="js/main.js"></script>
+
+  <!-- Fundo dinâmico (polícia/bombeiros) -->
+  <div class="game-bg" aria-hidden="true"></div>
+
+  <!-- Overlays de crise -->
+  <div class="overlay overlay-calm" aria-hidden="true"></div>
+  <div class="overlay overlay-crisis" aria-hidden="true"></div>
+
+  <header class="top-bar">
+    <div id="careerLabel">Central: —</div>
+    <div id="cityLabel">Cidade: —</div>
+    <div id="rankLabel">Cargo: —</div>
+    <div id="timer">00:00</div>
+  </header>
+
+  <main class="game-layout">
+
+    <section class="panel left-panel">
+      <div class="panel-header">
+        <h2>Ocorrências</h2>
+        <div class="panel-sub" id="eventLabel">Evento: —</div>
+      </div>
+
+      <div id="callsList" class="calls-list"></div>
+
+      <button id="dispatchBtn" class="primary-btn">DESPACHAR UNIDADE</button>
+
+      <div class="hint-box">
+        <div class="hint-title">Como jogar</div>
+        <div class="hint-text">
+          1) Selecione uma ocorrência. <br/>
+          2) Toque em <b>DESPACHAR</b>. <br/>
+          3) Se despachar errado ou sem unidades livres, aumenta o stress e os erros.
+        </div>
+      </div>
+    </section>
+
+    <section class="panel center-panel">
+      <div class="panel-header">
+        <h2>Mapa Operacional</h2>
+        <div class="panel-sub">Visual tático</div>
+      </div>
+
+      <div class="map-wrap">
+        <img class="map-overlay" src="Imagen/city_map_overlay.jpg" alt="Mapa da cidade" />
+        <svg id="mapSvg" class="map-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Mapa de despacho">
+          <rect width="100" height="100" fill="transparent"></rect>
+          <circle cx="50" cy="50" r="2.8" fill="#00e676"></circle>
+        </svg>
+      </div>
+
+      <div class="map-legend">
+        <div class="legend-item">
+          <img src="Imagen/icon_incident.jpg" class="legend-icon" alt="Ícone ocorrência" />
+          <span>Ocorrência</span>
+        </div>
+        <div class="legend-item">
+          <img src="Imagen/icon_unit.jpg" class="legend-icon" alt="Ícone unidade" />
+          <span>Unidade</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel right-panel">
+      <div class="panel-header">
+        <h2>Status</h2>
+        <div class="panel-sub">Operador humano</div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-row"><span>Stress</span><strong id="stress">0%</strong></div>
+        <div class="stat-row"><span>Fadiga</span><strong id="fatigue">0%</strong></div>
+        <div class="stat-row"><span>Erros</span><strong id="errors">0</strong></div>
+        <div class="stat-row"><span>Unidades Livres</span><strong id="freeUnits">0</strong></div>
+        <div class="stat-row"><span>Pendências</span><strong id="pending">0</strong></div>
+        <div class="stat-row"><span>Tempo</span><strong id="remaining">05:00</strong></div>
+        <div class="stat-row"><span>Pontuação</span><strong id="score">0</strong></div>
+      </div>
+
+      <div class="danger-box" id="dangerBox">
+        <div class="danger-title">Alerta</div>
+        <div class="danger-text" id="dangerText">Nenhum alerta no momento.</div>
+      </div>
+
+      <button id="goRankingBtn" class="secondary-btn">VER RANKING</button>
+    </section>
+
+  </main>
+
+  <script src="js/main.js"></script>
 </body>
 </html>
