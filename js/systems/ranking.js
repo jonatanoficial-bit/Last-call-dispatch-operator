@@ -1,0 +1,1 @@
+export function pushScore(score){const r=JSON.parse(localStorage.getItem('lc_rank')||'[]');r.push({score});r.sort((a,b)=>b.score-a.score);localStorage.setItem('lc_rank',JSON.stringify(r.slice(0,10)));}

@@ -1,0 +1,1 @@
+export function saveGame(s){localStorage.setItem('lc_save',JSON.stringify(s));}
