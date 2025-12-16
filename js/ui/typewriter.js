@@ -1,0 +1,1 @@
+export function type(el,text){let i=0;el.textContent='';const s=setInterval(()=>{el.textContent+=text[i++];if(i>=text.length)clearInterval(s);},30);}
