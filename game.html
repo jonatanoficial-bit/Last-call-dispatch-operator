@@ -1,18 +1,140 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Atendimento | Last Call</title>
-<link rel="stylesheet" href="/Last-call-dispatch-operator/css/ui.css">
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Last Call — Atendimento</title>
+
+  <link rel="stylesheet" href="css/ui.css" />
 </head>
-<body data-page="game" class="page-game">
-<header class="hud">Atendimento em andamento</header>
-<main class="game-area">
-<div class="call-box">
-<p class="caller">Chamador: Alguém está gritando aqui!</p>
-<p class="operator">Operador: Qual o endereço da ocorrência?</p>
-<button>Despachar Viatura</button>
-</div>
-</main>
-<script src="/Last-call-dispatch-operator/js/main.js"></script>
-</body></html>
+
+<body data-page="game" class="page page-game">
+  <!-- HUD TOP -->
+  <header class="hud">
+    <div class="hud-left">
+      <div class="hud-title">Atendimento em andamento</div>
+      <div class="hud-sub">
+        <span id="hudService">—</span> • <span id="hudCity">—</span>
+        <span class="dot">•</span>
+        <span id="hudShift">—</span>
+      </div>
+    </div>
+
+    <div class="hud-right">
+      <div class="hud-box">
+        <div class="hud-k">Tempo</div>
+        <div class="hud-v" id="hudTime">00:00</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-k">Pontos</div>
+        <div class="hud-v" id="hudScore">0</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-k">Erros</div>
+        <div class="hud-v" id="hudErrors">0</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-k">Estresse</div>
+        <div class="hud-v" id="hudStress">0</div>
+      </div>
+      <button id="btnEndShift" class="hud-btn danger" type="button" aria-label="Encerrar turno">Encerrar</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="game-shell">
+    <!-- LEFT: TRANSCRIPT + ACTIONS -->
+    <section class="panel panel-main">
+      <div class="panel-top">
+        <div class="call-meta">
+          <div class="call-pill">Ligação <strong>#<span id="callIndex">1</span></strong> / <span id="callTotal">1</span></div>
+          <div class="call-pill">Tempo da ligação: <strong id="callTime">00:00</strong></div>
+        </div>
+      </div>
+
+      <div id="transcript" class="transcript" aria-label="Transcrição do atendimento"></div>
+
+      <div class="panel-bottom">
+        <div class="actions-head">
+          <div class="actions-title">Ações do atendente</div>
+          <div class="actions-hint">Faça perguntas, confirme dados e só então despache.</div>
+        </div>
+        <div id="actions" class="actions" aria-label="Ações do atendente"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: FACTS + CHECKLIST + SUMMARY -->
+    <aside class="panel panel-side">
+      <div class="side-block">
+        <div class="side-title">Status da ocorrência</div>
+        <div id="facts" class="facts" aria-label="Status"></div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-title">Checklist (qualidade)</div>
+        <div id="checklist" class="checklist" aria-label="Checklist"></div>
+      </div>
+
+      <div class="side-block">
+        <div class="side-title">Resumo</div>
+        <pre id="summary" class="summary" aria-label="Resumo do atendimento"></pre>
+      </div>
+
+      <div class="side-foot">
+        <div class="foot-hint">Dica: Endereço e feridos são críticos. Errar prioridade derruba sua pontuação.</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- DISPATCH MODAL -->
+  <div id="modalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-label="Despachar recursos">
+    <div class="modal">
+      <div class="modal-head">
+        <div class="modal-title">Despachar recursos</div>
+        <div class="modal-sub">Confirme tipo, prioridade, unidade e endereço.</div>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <label class="field">
+            <span class="field-label">Tipo</span>
+            <select id="dispatchType" class="field-control"></select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Prioridade</span>
+            <select id="dispatchPriority" class="field-control">
+              <option value="P1">P1 — Imediato / risco grave</option>
+              <option value="P2" selected>P2 — Urgente</option>
+              <option value="P3">P3 — Rotina / baixa urgência</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Unidade</span>
+            <select id="dispatchUnit" class="field-control"></select>
+          </label>
+
+          <label class="field field-wide">
+            <span class="field-label">Endereço</span>
+            <input id="dispatchAddress" class="field-control" type="text" placeholder="Rua, número, bairro" />
+          </label>
+
+          <label class="field field-wide">
+            <span class="field-label">Observações</span>
+            <textarea id="dispatchNotes" class="field-control" rows="3" placeholder="Descrição, orientação, risco, suspeitos, vítimas..."></textarea>
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnDispatchCancel" class="btn" type="button">Cancelar</button>
+        <button id="btnDispatchConfirm" class="btn primary" type="button">Confirmar despacho</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
