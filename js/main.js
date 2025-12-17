@@ -4,7 +4,7 @@
    CONFIG FIXA (GitHub Pages)
    ========================= */
 const REPO_BASE = "/Last-call-dispatch-operator";
-const APP_VERSION = "lc_dispatch_v1_2_more_cases";
+const APP_VERSION = "lc_dispatch_v1_3_endshift_fix";
 const LS_STATE = APP_VERSION + "_state";
 const LS_RANK  = APP_VERSION + "_rank";
 
@@ -22,7 +22,7 @@ const rand = (min,max)=>min+Math.floor(Math.random()*(max-min+1));
 const chance = (p)=>Math.random()<p;
 
 /* =========================
-   DATA (DEMO REALISTA)
+   DATA
    ========================= */
 const INCIDENT_TYPES_POLICE=[
   "Agressão / Briga",
@@ -220,7 +220,7 @@ function addLine(transcriptEl, role, msg, opt={}){
 }
 
 /* =========================
-   SCENARIOS (MUITO MAIS VARIADOS)
+   SCENARIOS (VARIADOS)
    ========================= */
 function mkPoliceScenario(city, preset){
   const addr = genAddress(city);
@@ -318,8 +318,7 @@ function mkPoliceScenario(city, preset){
     forcedEntry: {
       opening: `Tão tentando forçar o portão do prédio agora! Dá pra ouvir o ferro batendo! (${noise})`,
       facts: { risk:"Invasão / arrombamento", weapon:"Não confirmado", injuries:"Nenhum" },
-      correct: { type:"Invasão / arrombamento", priority:"P1", unit:"Força Tática", required:["Perguntar endereço","Perguntar descrição","Perguntar se ainda está no local"] },
-      extraAsk: { "Orientar não confrontar": commonAsk["Orientar não confrontar"] }
+      correct: { type:"Invasão / arrombamento", priority:"P1", unit:"Força Tática", required:["Perguntar endereço","Perguntar descrição","Perguntar se ainda está no local"] }
     },
     vandal: {
       opening: `Tem gente quebrando carros estacionados, chutando retrovisor e riscando tudo! (${noise})`,
@@ -336,11 +335,7 @@ function mkPoliceScenario(city, preset){
   };
 
   const p = presets[preset] || presets.dom;
-
-  const ask = {
-    ...commonAsk,
-    ...(p.extraAsk||{})
-  };
+  const ask = { ...commonAsk, ...(p.extraAsk||{}) };
 
   return {
     service:"police",
@@ -399,67 +394,57 @@ function mkFireScenario(city, preset){
     aptFire: {
       opening: `Tá saindo muita fumaça do apartamento do vizinho e o corredor tá tomado! (${noise})`,
       facts: { risk:"Incêndio potencial em edifício", injuries:"Desconhecido" },
-      correct: { type:"Incêndio residencial", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] },
-      extraAsk: { "Perguntar se há chamas": commonAsk["Perguntar se há chamas"], "Perguntar risco elétrico": commonAsk["Perguntar risco elétrico"] }
+      correct: { type:"Incêndio residencial", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] }
     },
     gasLeak: {
       opening: `Tá com cheiro forte de gás e tem gente passando mal aqui! (${noise})`,
       facts: { risk:"Vazamento de gás / intoxicação", injuries:"Possível" },
-      correct: { type:"Vazamento de gás / risco químico", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar afastar e ventilar","Perguntar feridos"] },
-      extraAsk: { "Orientar não usar fogo":"Ok, ninguém vai acender nada." }
+      correct: { type:"Vazamento de gás / risco químico", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar afastar e ventilar","Perguntar feridos"] }
     },
     carFire: {
       opening: `Um carro tá pegando fogo na rua agora, tá saindo fumaça preta! (${noise})`,
       facts: { risk:"Incêndio veicular", injuries:"Desconhecido" },
-      correct: { type:"Incêndio veicular", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar se há chamas"] },
-      extraAsk: { "Perguntar se tem combustível vazando":"Parece que tá vazando algo no chão." }
+      correct: { type:"Incêndio veicular", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar se há chamas"] }
     },
     crashRescue: {
       opening: `Acidente grave, tem gente presa nas ferragens! (${noise})`,
       facts: { risk:"Resgate veicular", injuries:"Provável" },
-      correct: { type:"Acidente de trânsito (resgate)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos","Perguntar pessoas presas"] },
-      extraAsk: { "Orientar não mover vítima":"Ok, não vou mexer na pessoa presa." }
+      correct: { type:"Acidente de trânsito (resgate)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos","Perguntar pessoas presas"] }
     },
     fainting: {
       opening: `Uma pessoa desmaiou e não responde direito! (${noise})`,
       facts: { risk:"Inconsciente", injuries:"Possível grave" },
-      correct: { type:"Desmaio / inconsciente", priority:"P1", unit:"Ambulância (APH)", required:["Perguntar endereço","Perguntar feridos"] },
-      extraAsk: { "Orientar checar respiração":"Ok, vou ver se tá respirando." }
+      correct: { type:"Desmaio / inconsciente", priority:"P1", unit:"Ambulância (APH)", required:["Perguntar endereço","Perguntar feridos"] }
     },
     elevator: {
       opening: `Tem gente presa no elevador, tá muito quente e eles tão em pânico! (${noise})`,
       facts: { risk:"Confinamento", injuries:"Possível" },
-      correct: { type:"Pessoa presa em elevador", priority:"P2", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos"] },
-      extraAsk: { "Orientar manter calma":"Ok, vou falar pra eles respirarem e aguardarem." }
+      correct: { type:"Pessoa presa em elevador", priority:"P2", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos"] }
     },
     flood: {
       opening: `A rua alagou, a água tá entrando nas casas e tem gente ilhada! (${noise})`,
       facts: { risk:"Alagamento", injuries:"Desconhecido" },
-      correct: { type:"Alagamento / enchente", priority:"P1", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] },
-      extraAsk: { "Perguntar nível da água":"Tá na altura do joelho e subindo rápido!" }
+      correct: { type:"Alagamento / enchente", priority:"P1", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] }
     },
     tree: {
       opening: `Uma árvore tá caindo e encostando nos fios, tá perigoso demais! (${noise})`,
       facts: { risk:"Risco elétrico e queda", injuries:"Nenhum" },
-      correct: { type:"Árvore caída / risco de queda", priority:"P2", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Orientar afastar e ventilar"] },
-      extraAsk: { "Orientar isolar área":"Ok, vou manter todo mundo longe." }
+      correct: { type:"Árvore caída / risco de queda", priority:"P2", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Orientar afastar e ventilar"] }
     },
     explosion: {
       opening: `Teve um estouro, cheiro forte e fumaça… pode explodir de novo! (${noise})`,
       facts: { risk:"Explosão / risco repetição", injuries:"Possível" },
-      correct: { type:"Explosão / princípio de explosão", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar feridos","Orientar evacuar"] },
-      extraAsk: { "Perguntar chamas":"Tem chama pequena e muita fumaça." }
+      correct: { type:"Explosão / princípio de explosão", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar feridos","Orientar evacuar"] }
     },
     heightRescue: {
       opening: `Tem alguém pendurado em altura… parece que vai cair! (${noise})`,
       facts: { risk:"Queda iminente", injuries:"Risco elevado" },
-      correct: { type:"Resgate (altura / difícil acesso)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar evacuar"] },
-      extraAsk: { "Orientar não se aproximar":"Ok, vou manter distância e não puxar a pessoa." }
+      correct: { type:"Resgate (altura / difícil acesso)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar evacuar"] }
     }
   };
 
   const p = presets[preset] || presets.aptFire;
-  const ask = { ...commonAsk, ...(p.extraAsk||{}) };
+  const ask = { ...commonAsk };
 
   return {
     service:"fire",
@@ -471,7 +456,6 @@ function mkFireScenario(city, preset){
 }
 
 function buildScenarioPack(service, city){
-  // presets amplos e diferentes para reduzir repetição
   const policePresets = ["dom","robbery","armed","noise","missing","crashSupport","stalking","forcedEntry","vandal","mental"];
   const firePresets   = ["aptFire","gasLeak","carFire","crashRescue","fainting","elevator","flood","tree","explosion","heightRescue"];
 
@@ -482,8 +466,7 @@ function buildScenarioPack(service, city){
     for(const p of firePresets) pool.push(mkFireScenario(city,p));
   }
 
-  // embaralha e seleciona quantidade por turno (pode crescer com dificuldade)
-  const desired = 8; // MAIS casos no demo, sem ficar longo demais
+  const desired = 8;
   for(let i=pool.length-1;i>0;i--){
     const j=Math.floor(Math.random()*(i+1));
     [pool[i],pool[j]]=[pool[j],pool[i]];
@@ -763,7 +746,7 @@ async function finishCall(st){
   saveState(st);
 
   if(st.callIndex >= st.scenarios.length){
-    endShift(st, true);
+    endShift(st, true, "completed");
     return;
   }
 
@@ -774,7 +757,8 @@ async function finishCall(st){
   }, 650);
 }
 
-function endShift(st, natural){
+function endShift(st, natural, reason){
+  // registra ranking (mesmo se encerrar manualmente)
   pushRank({
     score: st.score,
     errors: st.errors,
@@ -783,10 +767,12 @@ function endShift(st, natural){
     city: st.city,
     difficulty: st.difficulty,
     endedAt: new Date().toISOString(),
-    reason: natural ? "completed" : "manual"
+    reason: reason || (natural ? "completed" : "manual")
   });
+
+  // limpa state e volta ao menu (como você pediu)
   clearState();
-  location.href = "ranking.html";
+  location.href = "menu.html";
 }
 
 function beginCall(st){
@@ -829,7 +815,7 @@ function gameLoop(st){
   setCallTimer(st);
 
   if(now() >= st.shiftEndsAt){
-    endShift(st, true);
+    endShift(st, true, "time_end");
     return;
   }
 
@@ -862,8 +848,6 @@ function startTurnFromMenu(){
   st.shiftEndsAt = now() + shiftMinutes*60*1000;
 
   st.callSecondsLimit = diff==="hard" ? 80 : (diff==="extreme" ? 70 : 90);
-
-  // MAIS CASOS E MAIS VARIADOS
   st.scenarios = buildScenarioPack(service, city);
 
   st.callIndex = 0;
@@ -880,11 +864,7 @@ function startTurnFromMenu(){
    ========================= */
 function initCover(){
   const c = document.getElementById("cover");
-  if(!c){
-    // Se por algum motivo o cover não existe, não redireciona sozinho.
-    // A capa precisa ser "tela 1" e só avançar por toque/click.
-    return;
-  }
+  if(!c) return;
   const go = ()=>location.href="menu.html";
   c.addEventListener("pointerdown", go, {passive:true});
   c.addEventListener("click", go);
@@ -942,8 +922,27 @@ function initGame(){
     return;
   }
 
+  // FIX CRÍTICO: bind reforçado para MOBILE/PC (pointerdown + click)
   const endBtn = document.getElementById("btnEndShift");
-  if(endBtn) endBtn.addEventListener("click", ()=> endShift(st, false));
+  const endHandler = (ev)=>{
+    try{
+      ev.preventDefault();
+      ev.stopPropagation();
+    }catch{}
+    endShift(st, false, "manual_end");
+  };
+
+  if(endBtn){
+    endBtn.addEventListener("pointerdown", endHandler, {passive:false});
+    endBtn.addEventListener("click", endHandler);
+  }
+
+  // Atalho opcional: ESC encerra (PC)
+  document.addEventListener("keydown",(e)=>{
+    if(e.key==="Escape"){
+      endShift(st, false, "manual_end");
+    }
+  });
 
   beginCall(st);
   renderHUD(st);
