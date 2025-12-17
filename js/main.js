@@ -4,7 +4,7 @@
    CONFIG FIXA (GitHub Pages)
    ========================= */
 const REPO_BASE = "/Last-call-dispatch-operator";
-const APP_VERSION = "lc_dispatch_v1_1_gameplay";
+const APP_VERSION = "lc_dispatch_v1_2_more_cases";
 const LS_STATE = APP_VERSION + "_state";
 const LS_RANK  = APP_VERSION + "_rank";
 
@@ -17,6 +17,9 @@ const now = ()=>Date.now();
 const pad2 = (n)=>String(n).padStart(2,"0");
 const fmtTime = (sec)=>{sec=Math.max(0,Math.floor(sec));const m=Math.floor(sec/60),s=sec%60;return `${pad2(m)}:${pad2(s)}`;};
 const safeJson = (s,f)=>{try{return JSON.parse(s);}catch{return f;}};
+const pick = (a)=>a[Math.floor(Math.random()*a.length)];
+const rand = (min,max)=>min+Math.floor(Math.random()*(max-min+1));
+const chance = (p)=>Math.random()<p;
 
 /* =========================
    DATA (DEMO REALISTA)
@@ -29,7 +32,11 @@ const INCIDENT_TYPES_POLICE=[
   "Pessoa desaparecida",
   "Pessoa armada / ameaça",
   "Perturbação do sossego",
-  "Acidente de trânsito (apoio)"
+  "Acidente de trânsito (apoio)",
+  "Ameaça / perseguição",
+  "Invasão / arrombamento",
+  "Vandalismo / dano ao patrimônio",
+  "Transtorno mental com risco"
 ];
 const INCIDENT_TYPES_FIRE=[
   "Incêndio residencial",
@@ -38,8 +45,13 @@ const INCIDENT_TYPES_FIRE=[
   "Atendimento pré-hospitalar (APH)",
   "Vazamento de gás / risco químico",
   "Alagamento / enchente",
-  "Acidente de trânsito (resgate)"
+  "Acidente de trânsito (resgate)",
+  "Árvore caída / risco de queda",
+  "Explosão / princípio de explosão",
+  "Desmaio / inconsciente",
+  "Pessoa presa em elevador"
 ];
+
 const UNITS_POLICE=[
   "Viatura Rádio Patrulha",
   "Força Tática",
@@ -56,19 +68,19 @@ const UNITS_FIRE=[
 ];
 
 const CITY_SEEDS={
-  "São Paulo":["SP","Zona Norte","Zona Sul","Centro"],
-  "Rio de Janeiro":["RJ","Zona Norte","Zona Sul","Centro"],
-  "Belo Horizonte":["MG","Centro","Pampulha","Barreiro"],
-  "New York":["NY","Manhattan","Brooklyn","Queens"],
-  "Washington":["DC","Downtown","Georgetown","Capitol Hill"],
-  "London":["UK","Camden","Westminster","Southwark"],
-  "Paris":["FR","15e","18e","3e"],
-  "Berlin":["DE","Mitte","Kreuzberg","Prenzlauer Berg"],
-  "Seoul":["KR","Gangnam","Jongno","Mapo"],
-  "Beijing":["CN","Chaoyang","Haidian","Dongcheng"],
-  "Buenos Aires":["AR","Palermo","Recoleta","Caballito"]
+  "São Paulo":["SP","Zona Norte","Zona Sul","Centro","Leste","Oeste"],
+  "Rio de Janeiro":["RJ","Zona Norte","Zona Sul","Centro","Barra","Niterói"],
+  "Belo Horizonte":["MG","Centro","Pampulha","Barreiro","Venda Nova"],
+  "New York":["NY","Manhattan","Brooklyn","Queens","Bronx"],
+  "Washington":["DC","Downtown","Georgetown","Capitol Hill","Navy Yard"],
+  "London":["UK","Camden","Westminster","Southwark","Hackney"],
+  "Paris":["FR","15e","18e","3e","11e"],
+  "Berlin":["DE","Mitte","Kreuzberg","Prenzlauer Berg","Neukölln"],
+  "Seoul":["KR","Gangnam","Jongno","Mapo","Songpa"],
+  "Beijing":["CN","Chaoyang","Haidian","Dongcheng","Xicheng"],
+  "Buenos Aires":["AR","Palermo","Recoleta","Caballito","Belgrano"]
 };
-const pick = (a)=>a[Math.floor(Math.random()*a.length)];
+
 function genAddress(city){
   const seed=CITY_SEEDS[city]||["Centro"];
   const area=pick(seed);
@@ -76,9 +88,27 @@ function genAddress(city){
   const streets=[
     "Rua das Flores","Avenida Central","Rua São Jorge","Rua do Comércio",
     "Avenida da Liberdade","Rua Nova","Rua do Porto","Avenida Brasil",
-    "Rua Vitória","Avenida Norte"
+    "Rua Vitória","Avenida Norte","Rua Paulista","Rua do Mercado",
+    "Avenida da República","Rua do Sol","Rua das Acácias"
   ];
   return `${pick(streets)}, ${n} - ${area}`;
+}
+
+function flavorByCity(city){
+  const f={
+    "São Paulo":["muito barulho de trânsito ao fundo","sirene distante","vozes de vizinhos no corredor"],
+    "Rio de Janeiro":["música alta ao fundo","vizinhos gritando na rua","som de moto acelerando"],
+    "Belo Horizonte":["cachorro latindo ao fundo","pessoas na varanda falando alto","porta batendo"],
+    "New York":["honking e sirenes ao fundo","subway passando ao longe","ruído de rua intensa"],
+    "Washington":["sirene distante","ruído urbano moderado","passos e eco no corredor"],
+    "London":["tráfego constante","voz em inglês ao fundo","alarme de loja ao longe"],
+    "Paris":["buzinas e vozes","porta de prédio rangendo","eco em escadaria"],
+    "Berlin":["ruído de rua","bicicleta passando","alarme distante"],
+    "Seoul":["notificação de celular repetindo","ruído de rua","voz no corredor"],
+    "Beijing":["ruído de rua","buzinas","porta metálica fechando"],
+    "Buenos Aires":["música ao fundo","vozes na rua","cachorro latindo"]
+  };
+  return pick(f[city]||["ruído de fundo"]);
 }
 
 /* =========================
@@ -89,79 +119,6 @@ function setRoomBackgroundAbsolute(imageFile){
   if(!st){st=document.createElement("style");st.id="dynamicRoomStyle";document.head.appendChild(st);}
   const url = `${REPO_BASE}/Imagen/${imageFile}`;
   st.textContent = `.page-game::before{background-image:url("${url}") !important;}`;
-}
-
-/* =========================
-   CENÁRIOS
-   ========================= */
-function buildScenarioPack(service, city){
-  const a1=genAddress(city), a2=genAddress(city), a3=genAddress(city), a4=genAddress(city);
-
-  const base=[
-    {
-      service:"police",
-      opening:"(voz tremendo) Ele tá gritando e quebrando tudo aqui em casa... eu tô com medo.",
-      facts:{ location:a1, risk:"Possível agressão em andamento", weapon:"Não confirmado", injuries:"Não confirmado" },
-      ask:{
-        "Perguntar endereço":`O endereço é ${a1}. Por favor, vem rápido.`,
-        "Perguntar se há arma":"Eu não vi arma, mas ele tá muito alterado.",
-        "Perguntar se há feridos":"Eu tô com dor no braço... ele me empurrou.",
-        "Orientar segurança":"Eu vou me trancar no quarto. Tô com a criança comigo.",
-        "Perguntar descrição":"É meu marido… tá sem camisa, muito nervoso.",
-        "Orientar não confrontar":"Tá bom, eu não vou discutir com ele."
-      },
-      correct:{ type:"Violência doméstica", priority:"P1", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Perguntar se há feridos"] }
-    },
-    {
-      service:"police",
-      opening:"Tem um cara tentando arrombar a loja aqui do lado! Eu ouvi vidro quebrando!",
-      facts:{ location:a2, risk:"Crime em andamento", weapon:"Não confirmado", injuries:"Nenhum" },
-      ask:{
-        "Perguntar endereço":`É na ${a2}. Loja de esquina.`,
-        "Perguntar descrição":"Ele tá de moletom escuro e boné. Tá sozinho.",
-        "Perguntar se há arma":"Não vi arma, mas ele tá mexendo na cintura.",
-        "Orientar não confrontar":"Tá, vou ficar aqui dentro e não vou sair.",
-        "Orientar segurança":"Vou trancar a porta e apagar as luzes."
-      },
-      correct:{ type:"Roubo / Assalto em andamento", priority:"P1", unit:"Força Tática", required:["Perguntar endereço","Perguntar descrição"] }
-    },
-    {
-      service:"fire",
-      opening:"Tá saindo fumaça do apartamento do vizinho! O corredor já tá com cheiro forte!",
-      facts:{ location:a3, risk:"Incêndio potencial", injuries:"Desconhecido" },
-      ask:{
-        "Perguntar endereço":`É na ${a3}. Prédio de 8 andares.`,
-        "Perguntar se há chamas":"Eu ainda não vi chama, só muita fumaça pela porta.",
-        "Orientar evacuar":"Ok, vou avisar o síndico e descer pelas escadas.",
-        "Perguntar pessoas presas":"Tem um idoso lá... não atende a porta.",
-        "Perguntar se há feridos":"Não sei… ninguém saiu ainda."
-      },
-      correct:{ type:"Incêndio residencial", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar pessoas presas"] }
-    },
-    {
-      service:"fire",
-      opening:"Tá com cheiro de gás aqui na rua toda, eu tô passando mal.",
-      facts:{ location:a4, risk:"Explosão/ intoxicação", injuries:"Tontura relatada" },
-      ask:{
-        "Perguntar endereço":`Aqui é ${a4}.`,
-        "Orientar afastar e ventilar":"Ok, vou abrir tudo e sair de perto.",
-        "Perguntar se há faísca/fogo":"Não, ninguém acendeu nada por enquanto.",
-        "Perguntar feridos":"Minha mãe tá tonta e com dor de cabeça.",
-        "Perguntar pessoas presas":"Tem gente dentro da casa ainda."
-      },
-      correct:{ type:"Vazamento de gás / risco químico", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar afastar e ventilar"] }
-    }
-  ];
-
-  const filtered = base.filter(s=>s.service===service);
-  const expanded = [];
-  for(let i=0;i<6;i++){
-    const b = JSON.parse(JSON.stringify(pick(filtered)));
-    b.facts.location = genAddress(city);
-    b.ask["Perguntar endereço"] = `O endereço é ${b.facts.location}.`;
-    expanded.push(b);
-  }
-  return expanded.slice(0,6);
 }
 
 /* =========================
@@ -225,6 +182,313 @@ function applyReward(st, reason, points){
   st.score += points;
   st.stress = clamp(st.stress - Math.round(points/3), 0, 100);
   st.summary = `Bônus: +${points} (${reason})`;
+}
+
+/* =========================
+   TYPEWRITER
+   ========================= */
+function addLine(transcriptEl, role, msg, opt={}){
+  const line = document.createElement("div");
+  line.className = "line";
+  line.innerHTML = `<div class="role">${role}</div><div class="msg"></div>`;
+  transcriptEl.appendChild(line);
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+
+  const msgEl = line.querySelector(".msg");
+  const cursor = document.createElement("span");
+  cursor.className = "cursor";
+  msgEl.appendChild(cursor);
+
+  const speed = opt.speed ?? 18;
+  const text = String(msg);
+  let i = 0;
+
+  return new Promise((res)=>{
+    const tick = ()=>{
+      if(i < text.length){
+        cursor.insertAdjacentText("beforebegin", text[i]);
+        i++;
+        transcriptEl.scrollTop = transcriptEl.scrollHeight;
+        setTimeout(tick, speed);
+        return;
+      }
+      cursor.remove();
+      res();
+    };
+    setTimeout(tick, opt.delay ?? 60);
+  });
+}
+
+/* =========================
+   SCENARIOS (MUITO MAIS VARIADOS)
+   ========================= */
+function mkPoliceScenario(city, preset){
+  const addr = genAddress(city);
+  const noise = flavorByCity(city);
+
+  const commonAsk = {
+    "Perguntar endereço": `É na ${addr}.`,
+    "Perguntar se há feridos": pick([
+      "Tem uma pessoa com sangramento leve.",
+      "Acho que alguém caiu… tá reclamando de dor.",
+      "Não vi sangue, mas tem gente chorando.",
+      "Ainda não sei, tá confuso aqui."
+    ]),
+    "Perguntar se há arma": pick([
+      "Não vi arma, mas ele colocou a mão na cintura.",
+      "Eu vi algo metálico… pode ser faca.",
+      "Não tenho certeza, tô com medo de olhar.",
+      "Acho que não, mas ele tá ameaçando."
+    ]),
+    "Perguntar descrição": pick([
+      "É um homem de moletom escuro, boné, sozinho.",
+      "É uma mulher alterada, gritando com todo mundo.",
+      "São dois, um tá filmando e o outro provoca.",
+      "Parece alguém conhecido da região."
+    ]),
+    "Orientar segurança": pick([
+      "Ok, vou me afastar e ficar em local seguro.",
+      "Vou trancar a porta e esperar em silêncio.",
+      "Vou manter distância e não confrontar.",
+      "Vou chamar alguém para ficar comigo aqui."
+    ]),
+    "Orientar não confrontar": pick([
+      "Tá bom, não vou discutir com ele.",
+      "Ok, eu não vou me aproximar.",
+      "Certo, vou só observar de longe.",
+      "Entendido, vou aguardar em segurança."
+    ]),
+    "Perguntar placa/veículo": pick([
+      "É um carro prata, acho que é hatch. Não vi a placa inteira.",
+      "Tem uma moto preta sem placa visível.",
+      "Vi um carro branco saindo rápido, placa começou com 'B'.",
+      "Não consigo ver a placa daqui."
+    ]),
+    "Perguntar se ainda está no local": pick([
+      "Sim, ainda tá aqui agora.",
+      "Tá saindo, mas ainda dá pra ver.",
+      "Já saiu, mas pode estar por perto.",
+      "Voltou de novo, tá rodando a rua."
+    ])
+  };
+
+  const presets = {
+    dom: {
+      opening: `(voz baixa e tremendo) Ele tá alterado dentro de casa… eu tô com medo. (${noise})`,
+      facts: { risk:"Possível violência doméstica", weapon:"Não confirmado", injuries:"Desconhecido" },
+      correct: { type:"Violência doméstica", priority:"P1", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Perguntar se há feridos","Orientar segurança"] },
+      extraAsk: { "Perguntar relação com agressor": "É meu companheiro… ele tá fora de si.", "Perguntar crianças no local":"Tem uma criança aqui comigo." }
+    },
+    robbery: {
+      opening: `Tem alguém tentando arrombar a porta da loja! Eu ouvi barulho de metal e vidro! (${noise})`,
+      facts: { risk:"Crime em andamento", weapon:"Não confirmado", injuries:"Nenhum" },
+      correct: { type:"Roubo / Assalto em andamento", priority:"P1", unit:"Força Tática", required:["Perguntar endereço","Perguntar descrição","Perguntar se ainda está no local"] },
+      extraAsk: { "Perguntar fuga":"Se ele correr, acho que vai pela avenida principal." }
+    },
+    armed: {
+      opening: `Eu vi um homem mostrando algo que parece arma na rua… ele tá ameaçando as pessoas. (${noise})`,
+      facts: { risk:"Ameaça com possível arma", weapon:"Possível", injuries:"Desconhecido" },
+      correct: { type:"Pessoa armada / ameaça", priority:"P1", unit:"ROTA (apoio tático)", required:["Perguntar endereço","Perguntar descrição","Perguntar se há arma"] },
+      extraAsk: { "Orientar manter distância":"Ok, vou sair daqui e não chamar atenção." }
+    },
+    noise: {
+      opening: `Tem uma festa e som altíssimo faz horas, já deu briga aqui no prédio. (${noise})`,
+      facts: { risk:"Perturbação com potencial conflito", weapon:"Não confirmado", injuries:"Não confirmado" },
+      correct: { type:"Perturbação do sossego", priority:"P3", unit:"Policiamento comunitário", required:["Perguntar endereço","Perguntar se há feridos"] },
+      extraAsk: { "Perguntar se há ameaças":"Teve ameaça, mas agora tá mais calmo." }
+    },
+    missing: {
+      opening: `Meu filho sumiu faz algumas horas… eu não sei o que fazer. (${noise})`,
+      facts: { risk:"Pessoa desaparecida", weapon:"N/A", injuries:"Desconhecido" },
+      correct: { type:"Pessoa desaparecida", priority:"P2", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Perguntar descrição"] },
+      extraAsk: { "Perguntar roupa":"Ele tava com camiseta azul e tênis branco.", "Perguntar último local":"A última vez foi perto do mercado." }
+    },
+    crashSupport: {
+      opening: `Teve uma batida e os motoristas estão brigando no meio da rua! (${noise})`,
+      facts: { risk:"Conflito após acidente", weapon:"Não confirmado", injuries:"Possível" },
+      correct: { type:"Acidente de trânsito (apoio)", priority:"P2", unit:"Trânsito (apoio)", required:["Perguntar endereço","Perguntar se há feridos","Orientar não confrontar"] },
+      extraAsk: { "Perguntar placa/veículo": commonAsk["Perguntar placa/veículo"] }
+    },
+    stalking: {
+      opening: `Tem um cara me seguindo… eu tô na rua e ele não para. (${noise})`,
+      facts: { risk:"Ameaça / perseguição", weapon:"Desconhecido", injuries:"Nenhum" },
+      correct: { type:"Ameaça / perseguição", priority:"P1", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Perguntar descrição","Orientar segurança"] },
+      extraAsk: { "Orientar procurar local público":"Ok, vou entrar numa loja movimentada." }
+    },
+    forcedEntry: {
+      opening: `Tão tentando forçar o portão do prédio agora! Dá pra ouvir o ferro batendo! (${noise})`,
+      facts: { risk:"Invasão / arrombamento", weapon:"Não confirmado", injuries:"Nenhum" },
+      correct: { type:"Invasão / arrombamento", priority:"P1", unit:"Força Tática", required:["Perguntar endereço","Perguntar descrição","Perguntar se ainda está no local"] },
+      extraAsk: { "Orientar não confrontar": commonAsk["Orientar não confrontar"] }
+    },
+    vandal: {
+      opening: `Tem gente quebrando carros estacionados, chutando retrovisor e riscando tudo! (${noise})`,
+      facts: { risk:"Vandalismo em andamento", weapon:"Não confirmado", injuries:"Nenhum" },
+      correct: { type:"Vandalismo / dano ao patrimônio", priority:"P2", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Perguntar descrição","Perguntar se ainda está no local"] },
+      extraAsk: { "Perguntar quantos suspeitos":"São dois ou três… difícil contar daqui." }
+    },
+    mental: {
+      opening: `Tem uma pessoa falando coisas sem sentido e querendo pular… eu tô assustado. (${noise})`,
+      facts: { risk:"Transtorno mental com risco", weapon:"N/A", injuries:"Risco elevado" },
+      correct: { type:"Transtorno mental com risco", priority:"P1", unit:"Viatura Rádio Patrulha", required:["Perguntar endereço","Orientar segurança","Perguntar se há feridos"] },
+      extraAsk: { "Orientar manter contato visual à distância":"Ok, vou falar com calma sem chegar perto." }
+    }
+  };
+
+  const p = presets[preset] || presets.dom;
+
+  const ask = {
+    ...commonAsk,
+    ...(p.extraAsk||{})
+  };
+
+  return {
+    service:"police",
+    opening: p.opening,
+    facts: { location: addr, ...p.facts },
+    ask,
+    correct: p.correct
+  };
+}
+
+function mkFireScenario(city, preset){
+  const addr = genAddress(city);
+  const noise = flavorByCity(city);
+
+  const commonAsk = {
+    "Perguntar endereço": `É na ${addr}.`,
+    "Perguntar se há chamas": pick([
+      "Tem chama pequena, mas tá aumentando rápido.",
+      "Ainda não vi chama, só muita fumaça saindo.",
+      "Tem labareda na janela!",
+      "Tá pegando no sofá, fogo visível."
+    ]),
+    "Perguntar pessoas presas": pick([
+      "Acho que tem gente lá dentro sim!",
+      "Ninguém respondeu… pode ter alguém.",
+      "Tem um idoso que mora ali.",
+      "Vi uma criança pela janela."
+    ]),
+    "Orientar evacuar": pick([
+      "Ok, vou descer pela escada e avisar os vizinhos.",
+      "Certo, vou sair do prédio e ir para área aberta.",
+      "Entendido, todo mundo vai para fora agora.",
+      "Vou evacuar e não vou usar elevador."
+    ]),
+    "Orientar afastar e ventilar": pick([
+      "Ok, vou abrir tudo e sair de perto.",
+      "Certo, vou cortar a energia e sair do local.",
+      "Vou afastar as pessoas e não acender nada.",
+      "Entendido, vou para fora imediatamente."
+    ]),
+    "Perguntar feridos": pick([
+      "Tem alguém com falta de ar por fumaça.",
+      "Uma pessoa caiu e não responde direito.",
+      "Tem gente tossindo muito.",
+      "Ainda não sei, tá todo mundo em pânico."
+    ]),
+    "Perguntar risco elétrico": pick([
+      "Tem faísca perto do quadro de luz.",
+      "Não, parece só fumaça do cômodo.",
+      "Sim, o disjuntor tá estalando.",
+      "Não sei, mas tem cheiro de fio queimado."
+    ])
+  };
+
+  const presets = {
+    aptFire: {
+      opening: `Tá saindo muita fumaça do apartamento do vizinho e o corredor tá tomado! (${noise})`,
+      facts: { risk:"Incêndio potencial em edifício", injuries:"Desconhecido" },
+      correct: { type:"Incêndio residencial", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] },
+      extraAsk: { "Perguntar se há chamas": commonAsk["Perguntar se há chamas"], "Perguntar risco elétrico": commonAsk["Perguntar risco elétrico"] }
+    },
+    gasLeak: {
+      opening: `Tá com cheiro forte de gás e tem gente passando mal aqui! (${noise})`,
+      facts: { risk:"Vazamento de gás / intoxicação", injuries:"Possível" },
+      correct: { type:"Vazamento de gás / risco químico", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar afastar e ventilar","Perguntar feridos"] },
+      extraAsk: { "Orientar não usar fogo":"Ok, ninguém vai acender nada." }
+    },
+    carFire: {
+      opening: `Um carro tá pegando fogo na rua agora, tá saindo fumaça preta! (${noise})`,
+      facts: { risk:"Incêndio veicular", injuries:"Desconhecido" },
+      correct: { type:"Incêndio veicular", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar se há chamas"] },
+      extraAsk: { "Perguntar se tem combustível vazando":"Parece que tá vazando algo no chão." }
+    },
+    crashRescue: {
+      opening: `Acidente grave, tem gente presa nas ferragens! (${noise})`,
+      facts: { risk:"Resgate veicular", injuries:"Provável" },
+      correct: { type:"Acidente de trânsito (resgate)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos","Perguntar pessoas presas"] },
+      extraAsk: { "Orientar não mover vítima":"Ok, não vou mexer na pessoa presa." }
+    },
+    fainting: {
+      opening: `Uma pessoa desmaiou e não responde direito! (${noise})`,
+      facts: { risk:"Inconsciente", injuries:"Possível grave" },
+      correct: { type:"Desmaio / inconsciente", priority:"P1", unit:"Ambulância (APH)", required:["Perguntar endereço","Perguntar feridos"] },
+      extraAsk: { "Orientar checar respiração":"Ok, vou ver se tá respirando." }
+    },
+    elevator: {
+      opening: `Tem gente presa no elevador, tá muito quente e eles tão em pânico! (${noise})`,
+      facts: { risk:"Confinamento", injuries:"Possível" },
+      correct: { type:"Pessoa presa em elevador", priority:"P2", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Perguntar feridos"] },
+      extraAsk: { "Orientar manter calma":"Ok, vou falar pra eles respirarem e aguardarem." }
+    },
+    flood: {
+      opening: `A rua alagou, a água tá entrando nas casas e tem gente ilhada! (${noise})`,
+      facts: { risk:"Alagamento", injuries:"Desconhecido" },
+      correct: { type:"Alagamento / enchente", priority:"P1", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Perguntar pessoas presas","Orientar evacuar"] },
+      extraAsk: { "Perguntar nível da água":"Tá na altura do joelho e subindo rápido!" }
+    },
+    tree: {
+      opening: `Uma árvore tá caindo e encostando nos fios, tá perigoso demais! (${noise})`,
+      facts: { risk:"Risco elétrico e queda", injuries:"Nenhum" },
+      correct: { type:"Árvore caída / risco de queda", priority:"P2", unit:"Defesa Civil (apoio)", required:["Perguntar endereço","Orientar afastar e ventilar"] },
+      extraAsk: { "Orientar isolar área":"Ok, vou manter todo mundo longe." }
+    },
+    explosion: {
+      opening: `Teve um estouro, cheiro forte e fumaça… pode explodir de novo! (${noise})`,
+      facts: { risk:"Explosão / risco repetição", injuries:"Possível" },
+      correct: { type:"Explosão / princípio de explosão", priority:"P1", unit:"Auto Bomba (AB)", required:["Perguntar endereço","Perguntar feridos","Orientar evacuar"] },
+      extraAsk: { "Perguntar chamas":"Tem chama pequena e muita fumaça." }
+    },
+    heightRescue: {
+      opening: `Tem alguém pendurado em altura… parece que vai cair! (${noise})`,
+      facts: { risk:"Queda iminente", injuries:"Risco elevado" },
+      correct: { type:"Resgate (altura / difícil acesso)", priority:"P1", unit:"Unidade de Resgate (UR)", required:["Perguntar endereço","Orientar evacuar"] },
+      extraAsk: { "Orientar não se aproximar":"Ok, vou manter distância e não puxar a pessoa." }
+    }
+  };
+
+  const p = presets[preset] || presets.aptFire;
+  const ask = { ...commonAsk, ...(p.extraAsk||{}) };
+
+  return {
+    service:"fire",
+    opening: p.opening,
+    facts: { location: addr, ...p.facts },
+    ask,
+    correct: p.correct
+  };
+}
+
+function buildScenarioPack(service, city){
+  // presets amplos e diferentes para reduzir repetição
+  const policePresets = ["dom","robbery","armed","noise","missing","crashSupport","stalking","forcedEntry","vandal","mental"];
+  const firePresets   = ["aptFire","gasLeak","carFire","crashRescue","fainting","elevator","flood","tree","explosion","heightRescue"];
+
+  const pool = [];
+  if(service==="police"){
+    for(const p of policePresets) pool.push(mkPoliceScenario(city,p));
+  }else{
+    for(const p of firePresets) pool.push(mkFireScenario(city,p));
+  }
+
+  // embaralha e seleciona quantidade por turno (pode crescer com dificuldade)
+  const desired = 8; // MAIS casos no demo, sem ficar longo demais
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  return pool.slice(0, desired);
 }
 
 /* =========================
@@ -307,41 +571,6 @@ function setCallTimer(st){
 }
 
 /* =========================
-   TYPEWRITER
-   ========================= */
-function addLine(transcriptEl, role, msg, opt={}){
-  const line = document.createElement("div");
-  line.className = "line";
-  line.innerHTML = `<div class="role">${role}</div><div class="msg"></div>`;
-  transcriptEl.appendChild(line);
-  transcriptEl.scrollTop = transcriptEl.scrollHeight;
-
-  const msgEl = line.querySelector(".msg");
-  const cursor = document.createElement("span");
-  cursor.className = "cursor";
-  msgEl.appendChild(cursor);
-
-  const speed = opt.speed ?? 18;
-  const text = String(msg);
-  let i = 0;
-
-  return new Promise((res)=>{
-    const tick = ()=>{
-      if(i < text.length){
-        cursor.insertAdjacentText("beforebegin", text[i]);
-        i++;
-        transcriptEl.scrollTop = transcriptEl.scrollHeight;
-        setTimeout(tick, speed);
-        return;
-      }
-      cursor.remove();
-      res();
-    };
-    setTimeout(tick, opt.delay ?? 60);
-  });
-}
-
-/* =========================
    ACTIONS
    ========================= */
 function renderActions(st){
@@ -363,11 +592,15 @@ function renderActions(st){
   if(st.service==="police"){
     btn("Perguntar arma","",()=>onAsk(st,"Perguntar se há arma"));
     btn("Perguntar descrição","",()=>onAsk(st,"Perguntar descrição"));
+    btn("Perguntar se ainda está no local","",()=>onAsk(st,"Perguntar se ainda está no local"));
     btn("Orientar segurança","",()=>onAsk(st,"Orientar segurança"));
     btn("Orientar não confrontar","",()=>onAsk(st,"Orientar não confrontar"));
+    btn("Perguntar placa/veículo","",()=>onAsk(st,"Perguntar placa/veículo"));
   }else{
     btn("Perguntar chamas","",()=>onAsk(st,"Perguntar se há chamas"));
     btn("Perguntar pessoas presas","",()=>onAsk(st,"Perguntar pessoas presas"));
+    btn("Perguntar feridos (APH)","",()=>onAsk(st,"Perguntar feridos"));
+    btn("Perguntar risco elétrico","",()=>onAsk(st,"Perguntar risco elétrico"));
     btn("Orientar evacuar","",()=>onAsk(st,"Orientar evacuar"));
     btn("Orientar afastar/ventilar","",()=>onAsk(st,"Orientar afastar e ventilar"));
   }
@@ -384,7 +617,7 @@ async function onAsk(st, key){
     return;
   }
 
-  const cost = 6 + Math.floor(Math.random()*5);
+  const cost = rand(5,9);
   st.callEndsAt -= cost*1000;
   st.shiftEndsAt -= Math.floor(cost/2)*1000;
   st.asked[key] = true;
@@ -395,16 +628,19 @@ async function onAsk(st, key){
 
   if(key==="Perguntar endereço") st.revealed.location = st.current.facts.location;
   if(key==="Perguntar se há feridos") st.revealed.injuries = st.current.facts.injuries || "Desconhecido";
+  if(key==="Perguntar feridos") st.revealed.injuries = st.current.facts.injuries || "Desconhecido";
   if(key==="Perguntar se há arma") st.revealed.weapon = st.current.facts.weapon || "Não confirmado";
   if(key==="Perguntar descrição") st.revealed.description = "Descrição coletada";
   if(key==="Perguntar pessoas presas") st.revealed.trapped = "Possível vítima presa";
-
+  if(key==="Perguntar se ainda está no local") st.revealed.onScene = "Status confirmado";
+  if(key==="Perguntar placa/veículo") st.revealed.vehicle = "Informação de veículo coletada";
+  if(key==="Perguntar risco elétrico") st.revealed.electric = "Risco elétrico avaliado";
   if(key.includes("Orientar")){
     st.revealed.guidance = "Orientação repassada";
     applyReward(st, "Orientação adequada", 5);
   }
 
-  st.stress = clamp(st.stress + 1, 0, 100);
+  st.stress = clamp(st.stress + (st.difficulty==="extreme"?2:1), 0, 100);
 
   renderFacts(st);
   renderChecklist(st);
@@ -520,10 +756,10 @@ async function finishCall(st){
   else if(callLeft < 0) applyPenalty(st, "Tempo de ligação excedido", 15);
 
   await addLine(tr, "Central", "Entendido. As equipes estão a caminho. Mantenha-se em segurança.", {speed:16});
-  await addLine(tr, "Chamador", "Tá… obrigado.", {speed:18});
+  await addLine(tr, "Chamador", pick(["Obrigado…","Tá… obrigado.","Ok…","Deus te abençoe…","Valeu…"]), {speed:18});
 
   st.callIndex += 1;
-  st.stress = clamp(st.stress + 2, 0, 100);
+  st.stress = clamp(st.stress + (st.difficulty==="extreme"?3:2), 0, 100);
   saveState(st);
 
   if(st.callIndex >= st.scenarios.length){
@@ -535,7 +771,7 @@ async function finishCall(st){
     beginCall(st);
     renderHUD(st);
     saveState(st);
-  }, 700);
+  }, 650);
 }
 
 function endShift(st, natural){
@@ -572,10 +808,13 @@ function beginCall(st){
   tr.innerHTML = "";
 
   (async()=>{
+    const cityFlavor = flavorByCity(st.city);
     await addLine(tr, "Central", st.service==="police" ? "190. Qual a sua emergência?" : "193. Qual a sua emergência?", {speed:16});
     await addLine(tr, "Chamador", st.current.opening, {speed:18});
+    if(chance(0.65)) await addLine(tr, "Sistema", `Nota: ${cityFlavor}.`, {speed:14, delay:120});
 
     if(st.current.facts?.risk) st.revealed.risk = st.current.facts.risk;
+    if(st.current.facts?.weapon && st.current.facts.weapon!=="N/A" && chance(0.25)) st.revealed.weapon = st.current.facts.weapon;
 
     renderFacts(st);
     renderChecklist(st);
@@ -623,7 +862,10 @@ function startTurnFromMenu(){
   st.shiftEndsAt = now() + shiftMinutes*60*1000;
 
   st.callSecondsLimit = diff==="hard" ? 80 : (diff==="extreme" ? 70 : 90);
+
+  // MAIS CASOS E MAIS VARIADOS
   st.scenarios = buildScenarioPack(service, city);
+
   st.callIndex = 0;
   st.score = 0;
   st.errors = 0;
@@ -637,9 +879,15 @@ function startTurnFromMenu(){
    INIT PAGES
    ========================= */
 function initCover(){
-  const c = $("#cover");
-  c.addEventListener("pointerdown", ()=>location.href="menu.html", {passive:true});
-  c.addEventListener("click", ()=>location.href="menu.html");
+  const c = document.getElementById("cover");
+  if(!c){
+    // Se por algum motivo o cover não existe, não redireciona sozinho.
+    // A capa precisa ser "tela 1" e só avançar por toque/click.
+    return;
+  }
+  const go = ()=>location.href="menu.html";
+  c.addEventListener("pointerdown", go, {passive:true});
+  c.addEventListener("click", go);
 }
 
 function initMenu(){
@@ -678,10 +926,13 @@ function initRanking(){
     }).join("");
   }
 
-  $("#btnClearRanking").addEventListener("click", ()=>{
-    localStorage.removeItem(LS_RANK);
-    location.reload();
-  });
+  const btnClear = document.getElementById("btnClearRanking");
+  if(btnClear){
+    btnClear.addEventListener("click", ()=>{
+      localStorage.removeItem(LS_RANK);
+      location.reload();
+    });
+  }
 }
 
 function initGame(){
@@ -691,7 +942,8 @@ function initGame(){
     return;
   }
 
-  $("#btnEndShift").addEventListener("click", ()=> endShift(st, false));
+  const endBtn = document.getElementById("btnEndShift");
+  if(endBtn) endBtn.addEventListener("click", ()=> endShift(st, false));
 
   beginCall(st);
   renderHUD(st);
