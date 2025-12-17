@@ -1,15 +1,37 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ranking | Last Call</title>
-<link rel="stylesheet" href="/Last-call-dispatch-operator/css/ui.css">
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Last Call — Ranking</title>
+
+  <link rel="stylesheet" href="css/ui.css" />
 </head>
-<body data-page="ranking" class="page-menu">
-<main class="menu">
-<h1>Ranking Local</h1>
-<p>Em breve</p>
-<button onclick="location.href='menu.html'">Voltar</button>
-</main>
-<script src="/Last-call-dispatch-operator/js/main.js"></script>
-</body></html>
+
+<body data-page="ranking" class="page page-ranking">
+  <main class="ranking-shell" role="main" aria-label="Ranking de pontuação">
+    <section class="panel ranking-card">
+      <div class="ranking-head">
+        <div>
+          <div class="ranking-title">Ranking</div>
+          <div class="ranking-sub">Melhores desempenhos locais</div>
+        </div>
+        <div class="ranking-actions">
+          <button id="btnClearRanking" class="btn danger" type="button">Limpar ranking</button>
+          <button onclick="location.href='menu.html'" class="btn" type="button">Voltar</button>
+        </div>
+      </div>
+
+      <div id="rankingList" class="ranking-list" aria-live="polite"></div>
+
+      <div class="hint">
+        O ranking é salvo localmente neste dispositivo.
+        Pontuações consideram agilidade, precisão e penalidades.
+      </div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
