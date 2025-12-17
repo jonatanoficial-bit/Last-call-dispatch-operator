@@ -1,1 +1,0 @@
-import{createCall}from'./callFactory.js';const c=createCall();const t=document.getElementById('transcript');if(t)t.textContent=c.text;

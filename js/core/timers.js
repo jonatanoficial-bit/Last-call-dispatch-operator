@@ -1,1 +1,0 @@
-import{State}from'./state.js';setInterval(()=>{State.time--;State.fatigue+=0.1;State.stress+=State.fatigue>50?0.3:0.1;},1000);

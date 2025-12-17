@@ -1,1 +1,0 @@
-export const State={stress:0,fatigue:0,score:0,errors:0,time:600};
