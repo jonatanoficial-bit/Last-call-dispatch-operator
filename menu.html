@@ -1,26 +1,87 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Menu | Last Call</title>
-<link rel="stylesheet" href="/Last-call-dispatch-operator/css/ui.css">
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>Last Call — Menu</title>
+
+  <link rel="stylesheet" href="css/ui.css" />
 </head>
-<body data-page="menu" class="page-menu">
-<main class="menu">
-<h1 class="title">LAST CALL</h1>
-<div class="panel">
-<label>Serviço
-<select id="service">
-<option value="police">Polícia</option>
-<option value="fire">Bombeiros</option>
-</select></label>
-<label>Cidade
-<select id="city">
-<option>São Paulo</option><option>Rio de Janeiro</option><option>Belo Horizonte</option>
-<option>New York</option><option>London</option><option>Paris</option>
-</select></label>
-<button id="startBtn">Iniciar Turno</button>
-</div>
-</main>
-<script src="/Last-call-dispatch-operator/js/main.js"></script>
-</body></html>
+
+<body data-page="menu" class="page page-menu">
+  <main class="menu-shell" role="main" aria-label="Menu principal">
+    <section class="panel menu-card">
+      <div class="menu-brand">
+        <div class="menu-logo" aria-label="Logo do jogo"></div>
+        <div class="menu-title">LAST CALL</div>
+        <div class="menu-sub">
+          Simulador de central de emergências. Faça as perguntas certas, registre corretamente
+          e despache recursos com prioridade adequada. Pontuação e penalidades em tempo real.
+        </div>
+        <div class="menu-sub">
+          Dica: em dificuldade alta, o tempo por ligação é menor e o estresse cresce mais rápido.
+        </div>
+      </div>
+
+      <div class="menu-form">
+        <div class="menu-grid">
+          <label class="field">
+            <span class="field-label">Carreira</span>
+            <select id="career" class="field-control" aria-label="Carreira">
+              <option value="police">Polícia</option>
+              <option value="fire">Bombeiros</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Cidade</span>
+            <select id="city" class="field-control" aria-label="Cidade">
+              <option>São Paulo</option>
+              <option>Rio de Janeiro</option>
+              <option>Belo Horizonte</option>
+              <option>New York</option>
+              <option>Washington</option>
+              <option>London</option>
+              <option>Paris</option>
+              <option>Berlin</option>
+              <option>Seoul</option>
+              <option>Beijing</option>
+              <option>Buenos Aires</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Dificuldade</span>
+            <select id="difficulty" class="field-control" aria-label="Dificuldade">
+              <option value="normal" selected>Normal</option>
+              <option value="hard">Difícil</option>
+              <option value="extreme">Extremo</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Turno (min)</span>
+            <select id="shift" class="field-control" aria-label="Turno em minutos">
+              <option value="6">6</option>
+              <option value="8">8</option>
+              <option value="10" selected>10</option>
+              <option value="12">12</option>
+              <option value="15">15</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="menu-actions">
+          <button id="btnStart" class="btn primary wide" type="button">Iniciar turno</button>
+          <button id="btnContinue" class="btn" type="button">Continuar</button>
+          <button id="btnRanking" class="btn" type="button">Ranking</button>
+          <button id="btnReset" class="btn danger" type="button">Resetar progresso</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
