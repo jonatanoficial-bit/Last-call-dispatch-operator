@@ -1,0 +1,12 @@
+
+html,body{margin:0;padding:0;height:100%;font-family:Arial,sans-serif;background:#000;color:#fff}
+.page-cover #cover{position:fixed;inset:0;background:url("/Last-call-dispatch-operator/Imagen/capa911.jpg") center/cover no-repeat}
+.page-menu{min-height:100vh;background:linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.9)),url("/Last-call-dispatch-operator/Imagen/menu_background.jpg") center/cover no-repeat}
+.page-game{min-height:100vh;background:linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.9)),url("/Last-call-dispatch-operator/Imagen/dispatch_police_room.jpg") center/cover no-repeat}
+.menu{padding:20px}
+.title{font-size:32px;margin-bottom:20px}
+.panel{background:rgba(0,0,0,.7);padding:20px;border-radius:12px}
+button{padding:12px;margin-top:10px;font-size:16px}
+.hud{padding:12px;background:rgba(0,0,0,.8)}
+.game-area{padding:20px}
+.call-box{background:rgba(0,0,0,.7);padding:20px;border-radius:12px}
